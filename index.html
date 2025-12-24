@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>blackout breaker</title>
+    <meta name="description" content="Upload redacted PDFs and view them with redactions removed.">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <span class="logo-text">blackout breaker</span>
+            </div>
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-view="split">
+                    <i class="fas fa-columns"></i>
+                    <span>Split View</span>
+                </button>
+                <button class="nav-tab" data-view="diff">
+                    <i class="fas fa-code-compare"></i>
+                    <span>Diff View</span>
+                </button>
+            </nav>
+        </div>
+        <div class="header-right">
+            <button class="upload-btn" id="uploadFolderBtn">
+                <i class="fas fa-folder-open"></i>
+                <span>Upload Folder</span>
+            </button>
+            <button class="upload-btn primary" id="uploadFileBtn">
+                <i class="fas fa-file-upload"></i>
+                <span>Upload PDF</span>
+            </button>
+            <input type="file" id="fileInput" accept=".pdf" hidden>
+            <input type="file" id="folderInput" webkitdirectory directory multiple hidden>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-folder-open"></i> Documents</h2>
+                <span class="doc-count" id="docCount">0 files</span>
+            </div>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search documents...">
+            </div>
+            <div class="file-tree" id="fileTree">
+                <div class="empty-state-sidebar">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Upload PDFs to get started</p>
+                </div>
+            </div>
+            <div class="sidebar-footer">
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-value" id="totalFiles">0</span>
+                        <span class="stat-label">Total Files</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="fixedCount">0</span>
+                        <span class="stat-label">Fixed</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <!-- Split View -->
+            <div class="view-container split-view active" id="splitView">
+                <div class="pane-container">
+                    <!-- Original Pane -->
+                    <div class="pane original-pane">
+                        <div class="pane-header">
+                            <div class="pane-title">
+                                <i class="fas fa-file-pdf"></i>
+                                <span>Original (Redacted)</span>
+                            </div>
+                            <div class="pane-controls">
+                                <button class="control-btn" id="zoomOut" title="Zoom Out">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <span class="zoom-level" id="zoomLevel">100%</span>
+                                <button class="control-btn" id="zoomIn" title="Zoom In">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pane-content" id="originalViewer">
+                            <div class="empty-state">
+                                <i class="fas fa-file-pdf"></i>
+                                <p>Upload a PDF to view</p>
+                            </div>
+                        </div>
+                        <div class="pane-footer">
+                            <div class="page-nav">
+                                <button class="nav-btn" id="prevPage">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span class="page-info">
+                                    Page <input type="number" id="currentPage" value="1" min="1"> of <span id="totalPages">0</span>
+                                </span>
+                                <button class="nav-btn" id="nextPage">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resize Handle -->
+                    <div class="resize-handle" id="resizeHandle">
+                        <div class="handle-grip"></div>
+                    </div>
+
+                    <!-- Fixed Pane -->
+                    <div class="pane fixed-pane">
+                        <div class="pane-header">
+                            <div class="pane-title">
+                                <i class="fas fa-eye"></i>
+                                <span>Redactions Removed</span>
+                            </div>
+                            <div class="pane-controls">
+                                <button class="control-btn download-btn" id="downloadBtn" title="Save Fixed PDF">
+                                    <i class="fas fa-download"></i>
+                                    <span>Save Fixed</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pane-content" id="fixedViewer">
+                            <div class="empty-state">
+                                <i class="fas fa-magic"></i>
+                                <p>Fixed version will appear here</p>
+                            </div>
+                        </div>
+                        <div class="pane-footer">
+                            <div class="redaction-info">
+                                <span id="redactionCount">0 redactions detected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Diff View -->
+            <div class="view-container diff-view" id="diffView">
+                <div class="diff-header">
+                    <div class="diff-file-info">
+                        <i class="fas fa-file-alt"></i>
+                        <span class="diff-filename" id="diffFilename">No file selected</span>
+                    </div>
+                    <div class="diff-stats">
+                        <span class="redactions-found"><i class="fas fa-square"></i> <span id="redactionsCountDiff">0</span> redactions found</span>
+                    </div>
+                </div>
+                <div class="diff-content" id="diffContent">
+                    <div class="empty-state">
+                        <i class="fas fa-code-compare"></i>
+                        <p>Upload a document to view redaction locations</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Drop Zone Overlay -->
+    <div class="drop-overlay" id="dropOverlay">
+        <div class="drop-zone">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Drop PDF files here</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Processing Modal -->
+    <div class="modal" id="processingModal">
+        <div class="modal-content processing">
+            <div class="loading-spinner large"></div>
+            <h3>Processing PDF...</h3>
+            <p id="processingStatus">Detecting redactions</p>
+        </div>
+    </div>
+
+    <script src="js/pdfProcessor.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
