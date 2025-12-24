@@ -1,5 +1,7 @@
 # blackout breaker
 
+🔗 **[Try it now: https://sjacksonhodum.github.io/blackout-breaker/](https://sjacksonhodum.github.io/blackout-breaker/)**
+
 A web-based tool for viewing redacted PDFs (mainly yk what) with the redactions removed. Upload any PDF with black box redactions and see them highlighted and removed in a side-by-side view.
 
 ![Blackout Breaker](https://img.shields.io/badge/Status-Active-success)
